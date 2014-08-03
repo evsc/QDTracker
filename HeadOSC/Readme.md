@@ -21,7 +21,7 @@ Changes to original code
 * allows cropping of kinect image
 * add smoothing to head position
 * print out debug information on screen
-
+* trigonometry to convert coordinates to real-World data (mm)
 
 
 

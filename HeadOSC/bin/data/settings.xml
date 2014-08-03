@@ -3,7 +3,7 @@
     <!-- which kinect ID to open (note: doesn't change when reloading); int -->
     <kinectID>0</kinectID>
     <!-- display image: 0 - none, 1 - threshold, 2 - RGB, 3 - depth-->
-    <displayImage>3</displayImage>
+    <displayImage>0</displayImage>
     <!-- crop settings -->
     <cropKinectImage>
         <top>0</top>
@@ -26,7 +26,7 @@
         <!-- only consider highest points +- this & the person centroid; int -->
         <highestPointThreshold>50</highestPointThreshold>
         <!-- percentage to interpolate between person centroid & highest point; float 0 - 1-->
-        <headInterpolation>0.9</headInterpolation>
+        <headInterpolation>0.899999976</headInterpolation>
     </tracking>
     <!-- normalize head position coords, enable/disable; bool 0 or 1 -->
     <normalize>
