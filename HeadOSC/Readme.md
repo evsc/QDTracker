@@ -14,6 +14,21 @@ computes simple kinect head approximation & sends position over OSC
 See <https://github.com/danomatika/QDTracker> for documentation
 
 
+
+Changes to original code
+-------------------------
+* added bg subtraction
+* allows cropping of kinect image
+* add smoothing to head position
+* print out debug information on screen
+
+
+
+
+
+
+
+
 Algorithm
 ---------
 
@@ -23,7 +38,7 @@ Algorithm
 
 * find person
 * find highest point in person contour, ignore positions outside of person centroid += highestPointThreshold
-* compute approximate head position by interpolating along line between person centroid & highest point 
+
 
 Pros & Cons
 -----------
@@ -35,7 +50,6 @@ pros:
 cons:
 
 * only tracks 1 "person" aka sufficiently large thing
-* requires empty space, distracted by other sufficiently large things
 * not truely 3d, more like 2.5 since it's only from 1 perspective
 * no orientation data (aka looking up, looking down, etc)
 
@@ -57,7 +71,7 @@ see settings file comments for info: `data/settings.xml`
 Key Commands
 ------------
 
-* d: toggle display image type: threshold, RGB, depth, none
+* d: toggle display image type: threshold, RGB, depth, nullBg, none
 * =/-: increase/decrease kinect depth threshold
 * s: save settings
 * l: load settings
@@ -65,6 +79,12 @@ Key Commands
 * x: toggle x pos normalization
 * y: toggle y pos normalization
 * z: toggle z pos normalization
+* 1/2: increase/decrease smoothing of Head xyz (ofLerp, 0-1)
+* b: toggle bg-subtraction
+* n: capture nullBg for bg-subtraction
+* f: toggle fullscreen mode
+
+
 
 OSC
 ---

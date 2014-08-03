@@ -104,7 +104,9 @@ class ofApp : public ofBaseApp{
 			DEPTH = 3,
 			NULLBG = 4
 		} displayImage;
-		
+	
+		bool doFullScreen;
+
 		// osc send destination
 		string sendAddress;
 		unsigned int sendPort;

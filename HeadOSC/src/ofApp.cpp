@@ -152,17 +152,12 @@ void ofApp::update(){
 			
 			// send head position
 			ofxOscMessage message;
-			message.setAddress("/headcase");
+			message.setAddress("/head");
 			message.addFloatArg(headAdj.x);
 			message.addFloatArg(headAdj.y);
 			message.addFloatArg(headAdj.z);
 			sender.sendMessage(message);
 
-
-			// ofxOscMessage message2;
-			// message2.setAddress("/1/fader3");
-			// message2.addFloatArg(headAdj.x);
-			// sender.sendMessage(message2);
 		}
 	}
 }
@@ -219,16 +214,31 @@ void ofApp::draw(){
 		ofSetColor(0, 255, 255);
 		ofRect(cropLeft+head.x, cropTop+head.y, 10, 10);
 		
-		// draw current position
-		ofSetColor(255);
-		ofDrawBitmapString(ofToString(headAdj.x, 2)+" "+ofToString(headAdj.y, 2)+" "+ofToString(headAdj.z, 2), 12, 12);
 	}
 	
 
 	ofSetColor(255);
 	stringstream infoStream;
-	infoStream << "threshold (-/=)\t\t" <<  ofToString(threshold) << endl;
-	infoStream << "image (d)\t\t";
+	infoStream << "KINECT" << endl;
+	infoStream << "\tthreshold (-/=)\t\t" <<  ofToString(threshold) << endl;
+	infoStream << "\tnearClipping \t\t" << ofToString(nearClipping) << endl;
+	infoStream << "\tfarClipping \t\t" << ofToString(farClipping) << endl;
+	infoStream << "\tdoBgSubtraction (b)  \t";
+	if (doBgSubtraction) infoStream << "yes" << endl;
+	else infoStream << "no" << endl;
+	infoStream << "\tcapture nullBg  \t(n)" << endl;
+
+	infoStream << endl << "DETECTION" << endl;
+	infoStream << "\tpersonMinArea \t\t" << ofToString(personMinArea) << endl;
+	infoStream << "\tpersonMaxArea \t\t" << ofToString(personMaxArea) << endl;
+	infoStream << "\thighestPointThreshold \t" << ofToString(highestPointThreshold) << endl;
+	infoStream << "\tsmoothHead (1/2)\t" << ofToString(smoothHead) << endl;
+	infoStream << "\thead position \tx\t" << ofToString(headAdj.x, 2) << endl;
+	infoStream << "\t\t\ty\t" << ofToString(headAdj.y, 2) << endl;
+	infoStream << "\t\t\tz\t" << ofToString(headAdj.z, 2) << endl;
+	
+	infoStream << endl << "DISPLAY" << endl;
+	infoStream << "\tdisplay image (d)\t";
 	switch (displayImage) {
 		case 0: infoStream << "NONE" << endl;
 		break;
@@ -241,20 +251,15 @@ void ofApp::draw(){
 		case 4: infoStream << "NULLBG" << endl;
 		break;
 	}
-	infoStream << "nearClipping \t\t" << ofToString(nearClipping) << endl;
-	infoStream << "farClipping \t\t" << ofToString(farClipping) << endl;
-	infoStream << "personMinArea \t\t" << ofToString(personMinArea) << endl;
-	infoStream << "personMaxArea \t\t" << ofToString(personMaxArea) << endl;
-	infoStream << "smoothHead (1/2)\t" << ofToString(smoothHead) << endl;
-	infoStream << "highestPointThreshold \t" << ofToString(highestPointThreshold) << endl;
-	infoStream << "sendAddress \t \t" << sendAddress << endl;
-	infoStream << "doBgSubtraction (b)  \t";
-	if (doBgSubtraction) infoStream << "yes" << endl;
-	else infoStream << "no" << endl;
-	infoStream << "capture nullBg  \t(n)" << endl;
-	infoStream << "fullscreen \t \t(f/g) " << endl;
+	infoStream << "\tfullscreen \t \t(f) " << endl;
 
-	ofDrawBitmapString(infoStream.str(), 20, 300);
+
+	infoStream << endl << "OSC" << endl;
+	infoStream << "\tsendAddress \t \t" << sendAddress << endl;
+	infoStream << "\tport \t \t\t" << sendPort << endl;
+	
+
+	ofDrawBitmapString(infoStream.str(), 20, 100);
 
 
 	ofPopMatrix();
@@ -357,17 +362,16 @@ void ofApp::keyPressed(int key){
 			break;
 
 		case 'f':
-			ofSetFullscreen(true);
-			break;
-
-		case 'g':
-			ofSetFullscreen(false);
+			doFullScreen = !doFullScreen;
+			ofSetFullscreen(doFullScreen);
 			break;
 	}
 }
 
 //--------------------------------------------------------------
 void ofApp::resetSettings() {
+
+	doFullScreen = false;
 
 	doBgSubtraction = true;
 	captureNullBg = false;

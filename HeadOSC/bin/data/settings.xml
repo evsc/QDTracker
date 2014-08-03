@@ -6,8 +6,8 @@
     <displayImage>3</displayImage>
     <!-- crop settings -->
     <cropKinectImage>
-        <top>100</top>
-        <bottom>100</bottom>
+        <top>0</top>
+        <bottom>0</bottom>
         <left>0</left>
         <right>0</right>
     </cropKinectImage>
@@ -51,7 +51,8 @@
     <!-- osc settings -->
     <osc>
         <!-- host destination address -->
-        <sendAddress>192.168.1.193</sendAddress>
+        <!-- <sendAddress>192.168.1.193</sendAddress> -->
+        <sendAddress>localhost</sendAddress>
         <!-- host destination port -->
         <sendPort>8000</sendPort>
     </osc>
