@@ -2,7 +2,7 @@ HeadOSC
 =======
 
 <p align="center">
-	<img src="https://raw.github.com/danomatika/QDTracker/master/HeadOSC/screenshot.png"/>
+	<img src="https://raw.github.com/evsc/QDTracker/master/HeadOSC/screenshot.png"/>
 </p>
 
 computes simple kinect head approximation & sends position over OSC
@@ -33,7 +33,7 @@ Algorithm
 ---------
 
 <p align="center">
-	<img src="https://raw.github.com/danomatika/QDTracker/master/HeadOSC/sketch.jpg"/>
+	<img src="https://raw.github.com/evsc/QDTracker/master/HeadOSC/sketch.jpg"/>
 </p>
 
 * find person
