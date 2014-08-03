@@ -34,16 +34,33 @@ void ofApp::setup(){
 	// settings
 	resetSettings();
 	loadSettings();
+
+	cropW = kinect.width - cropLeft - cropRight;
+	cropH = kinect.height - cropTop - cropBottom;
 	
 	// setup kinect
 	kinect.init(false); // no IR image
 	kinect.setRegistration(true);
 	kinect.setDepthClipping(nearClipping, farClipping);
 	kinect.open(kinectID);
-	
+
+	if(kinect.isConnected()) {
+		ofLogNotice() << "sensor-emitter dist: " << kinect.getSensorEmitterDistance() << "cm";
+		ofLogNotice() << "sensor-camera dist:  " << kinect.getSensorCameraDistance() << "cm";
+		ofLogNotice() << "zero plane pixel size: " << kinect.getZeroPlanePixelSize() << "mm";
+		ofLogNotice() << "zero plane dist: " << kinect.getZeroPlaneDistance() << "mm";
+	}
+
 	// setup cv
-	depthImage.allocate(kinect.width, kinect.height);
-	depthDiff.allocate(kinect.width, kinect.height);
+	// depthImage.allocate(kinect.width, kinect.height);
+	depthImageCropped.allocate(kinect.width, kinect.height);
+	depthImageCropped.setROI(cropLeft,cropTop,cropW, cropH);
+	depthDiff.allocate(cropW, cropH);
+	nullBg.allocate(cropW, cropH);
+
+	// zero the tilt on startup
+	angle = 0;
+	kinect.setCameraTiltAngle(angle);
 }
 
 //--------------------------------------------------------------
@@ -54,8 +71,41 @@ void ofApp::update(){
 	if(kinect.isFrameNew()) { // dont bother if the frames aren't new
 	
 		// find person-sized blobs
-		depthImage.setFromPixels(kinect.getDepthPixels(), kinect.width, kinect.height);
-		depthDiff = depthImage;
+		// depthImage.setFromPixels(kinect.getDepthPixels(), kinect.width, kinect.height);
+		depthImageCropped.setFromPixels(kinect.getDepthPixels(),kinect.width, kinect.height);
+
+
+		depthDiff = depthImageCropped;
+
+		// bg subtraction
+		if (nullBgDefined && doBgSubtraction) {
+			cv::Mat cvimg = depthDiff.getCvImage();
+			cv::Mat bgimg = nullBg.getCvImage();
+			cv::subtract(cvimg, bgimg, cvimg);
+			*depthDiff.getCvImage() = cvimg;
+		}
+
+		if (captureNullBg) {
+			if (nullBgFrames==7) {
+				// first capture, let's take the full image
+				nullBg = depthImageCropped;
+
+			} else {
+				// now lets add weighted images, to smooth it over time
+				cv::Mat cvimg = nullBg.getCvImage();
+				cv::Mat depthimg = depthImageCropped.getCvImage();
+				cv::addWeighted(cvimg, .7, depthimg, 0.3, 0., cvimg);
+				*nullBg.getCvImage() = cvimg;
+			}
+			nullBgFrames--;
+			cout << "capture nullBg " << nullBgFrames << endl;
+			if (nullBgFrames<=0) {
+				// cvConvertScale( grayImg, shortImg, 65535.0f/255.0f, 0 );
+				nullBgFrames = 0;
+				captureNullBg = false;
+				nullBgDefined = true;
+			}
+		}
 		depthDiff.threshold(threshold);
 		depthDiff.updateTexture();
 		personFinder.findContours(depthDiff, personMinArea, personMaxArea, 1, false);
@@ -79,8 +129,15 @@ void ofApp::update(){
 			}
 			
 			// compute rough head position between centroid and highest point
-			head = person.position.getInterpolated(highestPoint, headInterpolation);
-			head.z = kinect.getDistanceAt(head);
+			// head = person.position.getInterpolated(highestPoint, headInterpolation);
+			ofPoint tmpHead = person.position.getInterpolated(highestPoint, headInterpolation);
+
+			head.x = ofLerp(highestPoint.x, head.x, smoothHead);
+			head.y = ofLerp(highestPoint.y, head.y, smoothHead);
+			head.z = ofLerp(kinect.getDistanceAt(tmpHead), head.z, smoothHead);
+
+			// int dif = head.x - highestPoint.x;
+			// head.z = kinect.getDistanceAt(head);
 			headAdj = head;
 			
 			// normalize values
@@ -95,11 +152,17 @@ void ofApp::update(){
 			
 			// send head position
 			ofxOscMessage message;
-			message.setAddress("/head");
+			message.setAddress("/headcase");
 			message.addFloatArg(headAdj.x);
 			message.addFloatArg(headAdj.y);
 			message.addFloatArg(headAdj.z);
 			sender.sendMessage(message);
+
+
+			// ofxOscMessage message2;
+			// message2.setAddress("/1/fader3");
+			// message2.addFloatArg(headAdj.x);
+			// sender.sendMessage(message2);
 		}
 	}
 }
@@ -107,11 +170,16 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
+	ofPushMatrix();
+	if (ofGetWidth()>640) {
+		ofScale(2.0,2.0,2.0);
+	}
+
 	// draw display image
 	ofSetColor(255);
 	switch(displayImage) {
 		case THRESHOLD:
-			depthDiff.draw(0, 0);
+			depthDiff.draw(cropLeft,cropTop);
 			break;
 		case RGB:
 			kinect.draw(0, 0);
@@ -119,38 +187,77 @@ void ofApp::draw(){
 		case DEPTH:
 			kinect.drawDepth(0, 0);
 			break;
+		case NULLBG:
+			nullBg.draw(cropLeft,cropTop);
 		default: // NONE
 			break;
 	}
+
+	// draw crop area
+	ofNoFill();
+	ofSetColor(200,200,0);
+	ofRect(cropLeft,cropTop,cropW,cropH);
 
 	if(personFinder.blobs.size() > 0) {
 
 		// draw person finder
 		ofSetLineWidth(2.0);
-		personFinder.draw(0, 0, 640, 480);
+		personFinder.draw(cropLeft,cropTop,cropW, cropH);
 	
 		// purple - found person centroid
 		ofFill();
 		ofSetColor(255, 0, 255);
-		ofRect(person.position, 10, 10);
+		ofRect(cropLeft+person.position.x, cropTop+person.position.y, 10, 10);
 		
 		// gold - highest point
 		ofFill();
 		ofSetColor(255, 255, 0);
-		ofRect(highestPoint, 10, 10);
+		ofRect(cropLeft+highestPoint.x, cropTop+highestPoint.y, 10, 10);
 		
 		// light blue - "head" position
 		ofFill();
 		ofSetColor(0, 255, 255);
-		ofRect(head.x, head.y, 10, 10);
+		ofRect(cropLeft+head.x, cropTop+head.y, 10, 10);
 		
 		// draw current position
 		ofSetColor(255);
 		ofDrawBitmapString(ofToString(headAdj.x, 2)+" "+ofToString(headAdj.y, 2)+" "+ofToString(headAdj.z, 2), 12, 12);
 	}
 	
+
 	ofSetColor(255);
-	ofDrawBitmapString("threshold " + ofToString(threshold), 12, 24);
+	stringstream infoStream;
+	infoStream << "threshold (-/=)\t\t" <<  ofToString(threshold) << endl;
+	infoStream << "image (d)\t\t";
+	switch (displayImage) {
+		case 0: infoStream << "NONE" << endl;
+		break;
+		case 1: infoStream << "THRESHOLD" << endl;
+		break;
+		case 2: infoStream << "RGB" << endl;
+		break;
+		case 3: infoStream << "DEPTH" << endl;
+		break;
+		case 4: infoStream << "NULLBG" << endl;
+		break;
+	}
+	infoStream << "nearClipping \t\t" << ofToString(nearClipping) << endl;
+	infoStream << "farClipping \t\t" << ofToString(farClipping) << endl;
+	infoStream << "personMinArea \t\t" << ofToString(personMinArea) << endl;
+	infoStream << "personMaxArea \t\t" << ofToString(personMaxArea) << endl;
+	infoStream << "smoothHead (1/2)\t" << ofToString(smoothHead) << endl;
+	infoStream << "highestPointThreshold \t" << ofToString(highestPointThreshold) << endl;
+	infoStream << "sendAddress \t \t" << sendAddress << endl;
+	infoStream << "doBgSubtraction (b)  \t";
+	if (doBgSubtraction) infoStream << "yes" << endl;
+	else infoStream << "no" << endl;
+	infoStream << "capture nullBg  \t(n)" << endl;
+	infoStream << "fullscreen \t \t(f/g) " << endl;
+
+	ofDrawBitmapString(infoStream.str(), 20, 300);
+
+
+	ofPopMatrix();
 }
 
 //--------------------------------------------------------------
@@ -165,11 +272,29 @@ void ofApp::keyPressed(int key){
 		case '-':
 			threshold--;
 			if(threshold < 0) threshold = 0;
+			// personMinArea-=100;
+			// cout << "personMinArea: " << personMinArea << endl;
+			cout << "threshold: " << threshold << endl;
 			break;
 			
 		case '=':
 			threshold++;
 			if(threshold > 255) threshold = 255;
+			// personMinArea+=100;
+			// cout << "personMinArea: " << personMinArea << endl;
+			cout << "threshold: " << threshold << endl;
+			break;		
+
+		case '1':
+			smoothHead-=0.01;
+			if(smoothHead < 0) smoothHead = 0;
+			cout << "smoothHead: " << smoothHead << endl;
+			break;
+			
+		case '2':
+			smoothHead+=.01;
+			if(smoothHead > 1) smoothHead = 1;
+			cout << "smoothHead: " << smoothHead << endl;
 			break;
 			
 		case 'x':
@@ -188,10 +313,22 @@ void ofApp::keyPressed(int key){
 			// increment enum
 			int d = (int)displayImage;
 			d++;
-			if(d > DEPTH) {
+			if(d > NULLBG) {
 				d = (int)NONE;
 			}
 			displayImage = (DisplayImage)d;
+			break;
+		}
+
+		case 'b': {
+			doBgSubtraction = !doBgSubtraction;
+			break;
+		}
+
+		case 'n': {
+			// capture empty scene for background subtraction
+			captureNullBg = true;
+			nullBgFrames = 7;
 			break;
 		}
 			
@@ -206,11 +343,45 @@ void ofApp::keyPressed(int key){
 		case 'R':
 			resetSettings();
 			break;
+
+		case OF_KEY_UP:
+			angle++;
+			if(angle>30) angle=30;
+			kinect.setCameraTiltAngle(angle);
+			break;
+			
+		case OF_KEY_DOWN:
+			angle--;
+			if(angle<-30) angle=-30;
+			kinect.setCameraTiltAngle(angle);
+			break;
+
+		case 'f':
+			ofSetFullscreen(true);
+			break;
+
+		case 'g':
+			ofSetFullscreen(false);
+			break;
 	}
 }
 
 //--------------------------------------------------------------
 void ofApp::resetSettings() {
+
+	doBgSubtraction = true;
+	captureNullBg = false;
+	nullBgFrames = 0;
+	nullBgDefined = false;
+
+	cropKinectImage = true;
+	cropTop = 0;
+	cropBottom = 0;
+	cropLeft = 0;
+	cropRight = 0;
+
+	cropW = 640;
+	cropH = 480;
 	
 	threshold = 160;
 	nearClipping = 500;
@@ -223,6 +394,8 @@ void ofApp::resetSettings() {
 	bNormalizeX = false;
 	bNormalizeY = false;
 	bNormalizeZ = false;
+
+	smoothHead = 0.7;
 	
 	bScaleX = false;
 	bScaleY = false;
@@ -235,7 +408,8 @@ void ofApp::resetSettings() {
 	displayImage = THRESHOLD;
 	kinectID = 0;
 	
-	sendAddress = "127.0.0.1";
+	// sendAddress = "127.0.0.1";
+	sendAddress = "localhost";
 	sendPort = 9000;
 
 	// setup osc
@@ -256,6 +430,14 @@ bool ofApp::loadSettings(const string xmlFile) {
 		
 		displayImage = (DisplayImage)xml.getValue("displayImage", displayImage);
 		kinectID = xml.getValue("kinectID", (int)kinectID);
+		
+		xml.pushTag("cropKinectImage");
+			cropTop = xml.getValue("top", cropTop);
+			cropBottom = xml.getValue("bottom", cropBottom);
+			cropLeft = xml.getValue("left", cropLeft);
+			cropRight = xml.getValue("right", cropRight);
+		xml.popTag();
+
 		
 		xml.pushTag("tracking");
 			threshold = xml.getValue("threshold", threshold);
@@ -312,6 +494,16 @@ bool ofApp::saveSettings(const string xmlFile) {
 		xml.addComment(" display image: 0 - none, 1 - threshold, 2 - RGB, 3 - depth");
 		xml.addValue("displayImage", displayImage);
 		
+		xml.addComment(" crop settings ");
+		xml.addTag("cropKinectImage");
+		xml.pushTag("cropKinectImage");
+			xml.addValue("top", cropTop);
+			xml.addValue("bottom", cropBottom);
+			xml.addValue("left", cropLeft);
+			xml.addValue("right", cropRight);
+		xml.popTag();
+		
+				
 		xml.addComment(" tracking settings ");
 		xml.addTag("tracking");
 		xml.pushTag("tracking");
@@ -330,6 +522,7 @@ bool ofApp::saveSettings(const string xmlFile) {
 			xml.addComment(" percentage to interpolate between person centroid & highest point; float 0 - 1" );
 			xml.addValue("headInterpolation", headInterpolation);
 		xml.popTag();
+
 		
 		xml.addComment(" normalize head position coords, enable/disable; bool 0 or 1 ");
 		xml.addTag("normalize");

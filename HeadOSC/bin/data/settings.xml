@@ -3,15 +3,22 @@
     <!-- which kinect ID to open (note: doesn't change when reloading); int -->
     <kinectID>0</kinectID>
     <!-- display image: 0 - none, 1 - threshold, 2 - RGB, 3 - depth-->
-    <displayImage>1</displayImage>
+    <displayImage>3</displayImage>
+    <!-- crop settings -->
+    <cropKinectImage>
+        <top>100</top>
+        <bottom>100</bottom>
+        <left>0</left>
+        <right>0</right>
+    </cropKinectImage>
     <!-- tracking settings -->
     <tracking>
         <!-- person finder depth clipping threshold; int 0 - 255 -->
-        <threshold>160</threshold>
+        <threshold>40</threshold>
         <!-- kinect near clipping plane in cm; int -->
         <nearClipping>500</nearClipping>
         <!-- kinect far clipping plane in cm; int -->
-        <farClipping>4000</farClipping>
+        <farClipping>6000</farClipping>
         <!-- minimum area to consider when looking for person blobs; int -->
         <personMinArea>3000</personMinArea>
         <!-- maximum area to consider when looking for person blobs; int -->
@@ -19,16 +26,16 @@
         <!-- only consider highest points +- this & the person centroid; int -->
         <highestPointThreshold>50</highestPointThreshold>
         <!-- percentage to interpolate between person centroid & highest point; float 0 - 1-->
-        <headInterpolation>0.600000024</headInterpolation>
+        <headInterpolation>1.000000000</headInterpolation>
     </tracking>
     <!-- normalize head position coords, enable/disable; bool 0 or 1 -->
     <normalize>
         <!-- normalized; 0 - width -->
-        <bNormalizeX>0</bNormalizeX>
+        <bNormalizeX>1</bNormalizeX>
         <!-- normalized; 0 - height -->
-        <bNormalizeY>0</bNormalizeY>
+        <bNormalizeY>1</bNormalizeY>
         <!-- normalized ; nearCLipping - farClipping -->
-        <bNormalizeZ>0</bNormalizeZ>
+        <bNormalizeZ>1</bNormalizeZ>
     </normalize>
     <!-- scale head position coords, performed after normalization -->
     <scale>
@@ -44,8 +51,8 @@
     <!-- osc settings -->
     <osc>
         <!-- host destination address -->
-        <sendAddress>127.0.0.1</sendAddress>
+        <sendAddress>192.168.1.193</sendAddress>
         <!-- host destination port -->
-        <sendPort>9000</sendPort>
+        <sendPort>8000</sendPort>
     </osc>
 </settings>

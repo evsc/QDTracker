@@ -48,9 +48,18 @@ class ofApp : public ofBaseApp{
 		ofxKinect kinect;		// our RGB/depth camera of course
 		ofxOscSender sender;	// for sending head position
 
+		int angle;
+
 		// search images
 		ofxCvGrayscaleImage depthImage;	// grayscale depth image
+		ofxCvGrayscaleImage depthImageCropped;	// cropped grayscale depth image
 		ofxCvGrayscaleImage depthDiff;	// thresholded person finder image
+		// ofxCvGrayscaleImage nullBg;	// empty scene, for background subtraction
+		ofxCvGrayscaleImage nullBg;	// empty scene, for background subtraction
+		bool captureNullBg;
+		int nullBgFrames;
+		bool nullBgDefined;
+		bool doBgSubtraction;
 
 		// blob trackers
 		ofxCvContourFinder 	personFinder;
@@ -68,6 +77,16 @@ class ofApp : public ofBaseApp{
 		unsigned int highestPointThreshold;	// only consider highest points +- this & the person centroid
 		float headInterpolation; // percentage to interpolate between person centroid & highest point (0-1)
 		
+
+		float smoothHead;
+		bool cropKinectImage;
+		int cropTop;
+		int cropBottom;
+		int cropLeft;
+		int cropRight;
+		int cropW;
+		int cropH;
+
 		// normalize the head coordinates?
 		bool bNormalizeX; // 0-kinect.width
 		bool bNormalizeY; // 0-kinect.height
@@ -82,7 +101,8 @@ class ofApp : public ofBaseApp{
 			NONE = 0,
 			THRESHOLD = 1,
 			RGB = 2,
-			DEPTH = 3
+			DEPTH = 3,
+			NULLBG = 4
 		} displayImage;
 		
 		// osc send destination
