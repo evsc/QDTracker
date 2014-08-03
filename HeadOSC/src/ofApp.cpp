@@ -132,9 +132,14 @@ void ofApp::update(){
 			// head = person.position.getInterpolated(highestPoint, headInterpolation);
 			ofPoint tmpHead = person.position.getInterpolated(highestPoint, headInterpolation);
 
-			head.x = ofLerp(highestPoint.x, head.x, smoothHead);
-			head.y = ofLerp(highestPoint.y, head.y, smoothHead);
-			head.z = ofLerp(kinect.getDistanceAt(tmpHead), head.z, smoothHead);
+			head.x = ofLerp(tmpHead.x, head.x, smoothHead);
+			head.y = ofLerp(tmpHead.y, head.y, smoothHead);
+
+			// filter out noise, 0 values
+			float headDepthValue = kinect.getDistanceAt(tmpHead);
+			if (headDepthValue > 1) {
+				head.z = ofLerp(headDepthValue, head.z, smoothHead);
+			}
 
 			// int dif = head.x - highestPoint.x;
 			// head.z = kinect.getDistanceAt(head);
@@ -232,6 +237,7 @@ void ofApp::draw(){
 	infoStream << "\tpersonMinArea \t\t" << ofToString(personMinArea) << endl;
 	infoStream << "\tpersonMaxArea \t\t" << ofToString(personMaxArea) << endl;
 	infoStream << "\thighestPointThreshold \t" << ofToString(highestPointThreshold) << endl;
+	infoStream << "\theadInterpolation \t" << ofToString(headInterpolation) << endl;
 	infoStream << "\tsmoothHead (1/2)\t" << ofToString(smoothHead) << endl;
 	infoStream << "\thead position \tx\t" << ofToString(headAdj.x, 2) << endl;
 	infoStream << "\t\t\ty\t" << ofToString(headAdj.y, 2) << endl;
