@@ -87,6 +87,8 @@ class ofApp : public ofBaseApp{
 		int cropW;
 		int cropH;
 
+		bool realWorldValues;
+
 		// normalize the head coordinates?
 		bool bNormalizeX; // 0-kinect.width
 		bool bNormalizeY; // 0-kinect.height

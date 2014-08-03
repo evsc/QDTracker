@@ -144,16 +144,29 @@ void ofApp::update(){
 			// int dif = head.x - highestPoint.x;
 			// head.z = kinect.getDistanceAt(head);
 			headAdj = head;
+
+			if (realWorldValues) {
+
+				// Trigonometry to get real-world X and Y, based on Z
+				// now X and Y will be positive/negative around center of image
+				float fovH = 57;
+				float fovV = 42;
+				headAdj.x = -(head.x-320)/320.0 * sin((PI/180.0)*fovH/2.0)*head.z;
+				headAdj.y = -(head.y-240)/240.0 * sin((PI/180.0)*fovV/2.0)*head.z;
+			} else {
+
+				// normalize values
+				if(bNormalizeX) headAdj.x = ofMap(head.x, 0, kinect.width, 0, 1);
+				if(bNormalizeY) headAdj.y = ofMap(head.y, 0, kinect.height, 0, 1);
+				if(bNormalizeZ) headAdj.z = ofMap(head.z, kinect.getNearClipping(), kinect.getFarClipping(), 0, 1);
+				
+				// scale values
+				if(bScaleX) headAdj.x *= scaleXAmt;
+				if(bScaleY) headAdj.y *= scaleYAmt;
+				if(bScaleZ) headAdj.z *= scaleZAmt;
+				
+			}
 			
-			// normalize values
-			if(bNormalizeX) headAdj.x = ofMap(head.x, 0, kinect.width, 0, 1);
-			if(bNormalizeY) headAdj.y = ofMap(head.y, 0, kinect.height, 0, 1);
-			if(bNormalizeZ) headAdj.z = ofMap(head.z, kinect.getNearClipping(), kinect.getFarClipping(), 0, 1);
-			
-			// scale values
-			if(bScaleX) headAdj.x *= scaleXAmt;
-			if(bScaleY) headAdj.y *= scaleYAmt;
-			if(bScaleZ) headAdj.z *= scaleZAmt;
 			
 			// send head position
 			ofxOscMessage message;
@@ -239,9 +252,12 @@ void ofApp::draw(){
 	infoStream << "\thighestPointThreshold \t" << ofToString(highestPointThreshold) << endl;
 	infoStream << "\theadInterpolation \t" << ofToString(headInterpolation) << endl;
 	infoStream << "\tsmoothHead (1/2)\t" << ofToString(smoothHead) << endl;
-	infoStream << "\thead position \tx\t" << ofToString(headAdj.x, 2) << endl;
-	infoStream << "\t\t\ty\t" << ofToString(headAdj.y, 2) << endl;
-	infoStream << "\t\t\tz\t" << ofToString(headAdj.z, 2) << endl;
+	infoStream << "\trealWorldValues (w)  \t";
+	if (realWorldValues) infoStream << "yes" << endl;
+	else infoStream << "no" << endl;
+	infoStream << "\thead position \tx\t" << ofToString(headAdj.x, 2) << "\t" << ofToString(head.x,2) << endl;
+	infoStream << "\t\t\ty\t" << ofToString(headAdj.y, 2) << "\t" << ofToString(head.y,2) << endl;
+	infoStream << "\t\t\tz\t" << ofToString(headAdj.z, 2) << "\t" << ofToString(head.z,2) << endl;
 	
 	infoStream << endl << "DISPLAY" << endl;
 	infoStream << "\tdisplay image (d)\t";
@@ -370,6 +386,10 @@ void ofApp::keyPressed(int key){
 		case 'f':
 			doFullScreen = !doFullScreen;
 			ofSetFullscreen(doFullScreen);
+			break; 
+
+		case 'w':
+			realWorldValues = !realWorldValues;
 			break;
 	}
 }
@@ -378,6 +398,7 @@ void ofApp::keyPressed(int key){
 void ofApp::resetSettings() {
 
 	doFullScreen = false;
+	realWorldValues = true;
 
 	doBgSubtraction = true;
 	captureNullBg = false;
