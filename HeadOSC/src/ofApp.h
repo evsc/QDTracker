@@ -47,8 +47,12 @@ class ofApp : public ofBaseApp{
 
 		ofxKinect kinect;		// our RGB/depth camera of course
 		ofxOscSender sender;	// for sending head position
+		ofxOscSender localSender;
 
 		int angle;
+		float fovH;
+		float fovV;
+		float distanceFloor;
 
 		// search images
 		ofxCvGrayscaleImage depthImage;	// grayscale depth image

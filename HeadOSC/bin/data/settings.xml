@@ -3,7 +3,7 @@
     <!-- which kinect ID to open (note: doesn't change when reloading); int -->
     <kinectID>0</kinectID>
     <!-- display image: 0 - none, 1 - threshold, 2 - RGB, 3 - depth-->
-    <displayImage>0</displayImage>
+    <displayImage>3</displayImage>
     <!-- crop settings -->
     <cropKinectImage>
         <top>0</top>
@@ -11,16 +11,22 @@
         <left>0</left>
         <right>0</right>
     </cropKinectImage>
+    <!-- values to make sure the dimensions are correct -->
+    <trigonometry>
+        <fovH>78.000000000</fovH>
+        <fovV>42.000000000</fovV>
+        <distanceFloor>1384.000000000</distanceFloor>
+    </trigonometry>
     <!-- tracking settings -->
     <tracking>
         <!-- person finder depth clipping threshold; int 0 - 255 -->
-        <threshold>40</threshold>
+        <threshold>20</threshold>
         <!-- kinect near clipping plane in cm; int -->
         <nearClipping>500</nearClipping>
         <!-- kinect far clipping plane in cm; int -->
         <farClipping>6000</farClipping>
         <!-- minimum area to consider when looking for person blobs; int -->
-        <personMinArea>3000</personMinArea>
+        <personMinArea>2000</personMinArea>
         <!-- maximum area to consider when looking for person blobs; int -->
         <personMaxArea>153600</personMaxArea>
         <!-- only consider highest points +- this & the person centroid; int -->
@@ -51,7 +57,7 @@
     <!-- osc settings -->
     <osc>
         <!-- host destination address -->
-        <sendAddress>localhost</sendAddress>
+        <sendAddress>100.100.10.10</sendAddress>
         <!-- host destination port -->
         <sendPort>8000</sendPort>
     </osc>

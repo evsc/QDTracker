@@ -149,8 +149,6 @@ void ofApp::update(){
 
 				// Trigonometry to get real-world X and Y, based on Z
 				// now X and Y will be positive/negative around center of image
-				float fovH = 57;
-				float fovV = 42;
 				headAdj.x = -(head.x-320)/320.0 * sin((PI/180.0)*fovH/2.0)*head.z;
 				headAdj.y = -(head.y-240)/240.0 * sin((PI/180.0)*fovV/2.0)*head.z;
 			} else {
@@ -167,6 +165,8 @@ void ofApp::update(){
 				
 			}
 			
+			// add constant to get proper dimension
+			headAdj.y += distanceFloor;
 			
 			// send head position
 			ofxOscMessage message;
@@ -175,6 +175,7 @@ void ofApp::update(){
 			message.addFloatArg(headAdj.y);
 			message.addFloatArg(headAdj.z);
 			sender.sendMessage(message);
+			localSender.sendMessage(message);
 
 		}
 	}
@@ -400,6 +401,10 @@ void ofApp::resetSettings() {
 	doFullScreen = false;
 	realWorldValues = true;
 
+	distanceFloor = 1384;	// 0-point kinect distance from floor in mm
+	fovH = 78;
+	fovV = 42;
+
 	doBgSubtraction = true;
 	captureNullBg = false;
 	nullBgFrames = 0;
@@ -439,12 +444,13 @@ void ofApp::resetSettings() {
 	displayImage = THRESHOLD;
 	kinectID = 0;
 	
-	// sendAddress = "127.0.0.1";
-	sendAddress = "localhost";
+	sendAddress = "127.0.0.1";
+	// sendAddress = "localhost";
 	sendPort = 9000;
 
 	// setup osc
 	sender.setup(sendAddress, sendPort);
+	localSender.setup("100.100.10.11", 8001);
 }
 
 //--------------------------------------------------------------
@@ -467,6 +473,12 @@ bool ofApp::loadSettings(const string xmlFile) {
 			cropBottom = xml.getValue("bottom", cropBottom);
 			cropLeft = xml.getValue("left", cropLeft);
 			cropRight = xml.getValue("right", cropRight);
+		xml.popTag();
+		
+		xml.pushTag("trigonometry");
+			fovH = xml.getValue("fovH", fovH);
+			fovV = xml.getValue("fovV", fovV);
+			distanceFloor = xml.getValue("distanceFloor", distanceFloor);
 		xml.popTag();
 
 		
@@ -532,6 +544,14 @@ bool ofApp::saveSettings(const string xmlFile) {
 			xml.addValue("bottom", cropBottom);
 			xml.addValue("left", cropLeft);
 			xml.addValue("right", cropRight);
+		xml.popTag();		
+
+		xml.addComment(" values to make sure the dimensions are correct ");
+		xml.addTag("trigonometry");
+		xml.pushTag("trigonometry");
+			xml.addValue("fovH", fovH);
+			xml.addValue("fovV", fovV);
+			xml.addValue("distanceFloor", distanceFloor);
 		xml.popTag();
 		
 				
