@@ -176,6 +176,7 @@ void ofApp::update(){
 			message.addFloatArg(headAdj.z);
 			sender.sendMessage(message);
 			localSender.sendMessage(message);
+			sender2.sendMessage(message);
 
 		}
 	}
@@ -185,8 +186,10 @@ void ofApp::update(){
 void ofApp::draw(){
 
 	ofPushMatrix();
-	if (ofGetWidth()>640) {
-		ofScale(2.0,2.0,2.0);
+	if (ofGetHeight()>480) {
+		float zoom = ofGetHeight()/480.0;
+		ofTranslate( (ofGetWidth()-640*zoom)/2, 0 , 0);
+		ofScale(zoom,zoom,zoom);
 	}
 
 	// draw display image
@@ -286,6 +289,12 @@ void ofApp::draw(){
 
 
 	ofPopMatrix();
+
+	if (drawCenterLine) {
+		ofNoFill();
+		ofSetColor(255,0,0);
+		ofLine(ofGetWidth()/2,0,ofGetWidth()/2,ofGetHeight());
+	}
 }
 
 //--------------------------------------------------------------
@@ -372,6 +381,10 @@ void ofApp::keyPressed(int key){
 			resetSettings();
 			break;
 
+		case 'c':
+			drawCenterLine = !drawCenterLine;
+			break;
+
 		case OF_KEY_UP:
 			angle++;
 			if(angle>30) angle=30;
@@ -400,6 +413,7 @@ void ofApp::resetSettings() {
 
 	doFullScreen = false;
 	realWorldValues = true;
+	drawCenterLine = true;
 
 	distanceFloor = 1384;	// 0-point kinect distance from floor in mm
 	fovH = 78;
@@ -449,7 +463,9 @@ void ofApp::resetSettings() {
 	sendPort = 9000;
 
 	// setup osc
+	cout << "setup OSC server " << endl;
 	sender.setup(sendAddress, sendPort);
+	sender2.setup("100.100.10.9", 8001);
 	localSender.setup("100.100.10.11", 8001);
 }
 

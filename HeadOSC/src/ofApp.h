@@ -46,8 +46,9 @@ class ofApp : public ofBaseApp{
 		bool saveSettings(const string xmlFile=SETTINGS);
 
 		ofxKinect kinect;		// our RGB/depth camera of course
-		ofxOscSender sender;	// for sending head position
-		ofxOscSender localSender;
+		ofxOscSender sender;	// for sending head position to Unity
+		ofxOscSender localSender;	// send data to this computer for electron density
+		ofxOscSender sender2;		// send data to second computer for electron density
 
 		int angle;
 		float fovH;
@@ -112,6 +113,7 @@ class ofApp : public ofBaseApp{
 		} displayImage;
 	
 		bool doFullScreen;
+		bool drawCenterLine;
 
 		// osc send destination
 		string sendAddress;
